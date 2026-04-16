@@ -1,83 +1,266 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
-import { useLanguage } from '../../App';
-import StepByStepPipeline from '../../components/StepByStepPipeline';
+import React, { useState, useContext } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+import { LanguageContext } from '../../App';
 import QuizComponent from '../../components/QuizComponent';
+import { wordTokenize, removeStopwords, simpleStem } from '../../utils/nlpHelpers';
 
-const QUIZ_QUESTIONS = [];
+const DEFAULT_SENTENCE = 'The quick brown fox jumps over the lazy dogs';
 
-const PIPELINE_STEPS = [
-  { icon: '📖', label: 'Overview',    color: 'bg-primary-100', description: 'Introduction to Text Preprocessing concepts and why they matter in NLP.' },
-  { icon: '🔍', label: 'Core Ideas',  color: 'bg-blue-100',    description: 'Explore the fundamental ideas and algorithms behind Text Preprocessing.' },
-  { icon: '⚡', label: 'In Practice', color: 'bg-emerald-100', description: 'See Text Preprocessing applied to real-world text examples.' },
-  { icon: '🧪', label: 'Experiment',  color: 'bg-amber-100',   description: 'Try it yourself with the interactive demo below.' },
+const STOPWORDS_SET = new Set(['a','an','the','is','it','in','on','at','to','for','of','and','or','but','not','with','this','that','these','those','i','you','he','she','we','they','be','am','are','was','were','been','have','has','had','do','does','did','will','would','could','should','over']);
+
+const QUIZ_QUESTIONS = [
+  {
+    question: 'What is tokenization in text preprocessing?',
+    options: [
+      { text: 'Translating text to another language', correct: false },
+      { text: 'Splitting text into words or tokens', correct: true },
+      { text: 'Removing all words from text', correct: false },
+      { text: 'Adding punctuation to text', correct: false },
+    ],
+    explanation: 'Tokenization splits text into individual units called tokens, typically words or sentences.',
+  },
+  {
+    question: 'What are stopwords?',
+    options: [
+      { text: 'Words that appear only once in a document', correct: false },
+      { text: 'Technical terms in a document', correct: false },
+      { text: 'Common words like "the", "is", "and" that carry little meaning', correct: true },
+      { text: 'Words that end a sentence', correct: false },
+    ],
+    explanation: 'Stopwords are frequently occurring words like "the", "is", "and" that are usually removed as they carry little semantic meaning.',
+  },
+  {
+    question: 'What does stemming do to a word?',
+    options: [
+      { text: 'Translates it to Hindi', correct: false },
+      { text: 'Removes its vowels', correct: false },
+      { text: 'Reduces it to its root/base form', correct: true },
+      { text: 'Capitalizes the first letter', correct: false },
+    ],
+    explanation: 'Stemming reduces a word to its base form: "running" → "run", "jumped" → "jump".',
+  },
+  {
+    question: 'Which step comes FIRST in text preprocessing?',
+    options: [
+      { text: 'Stemming', correct: false },
+      { text: 'Stopword removal', correct: false },
+      { text: 'Tokenization', correct: true },
+      { text: 'Sentiment analysis', correct: false },
+    ],
+    explanation: 'Tokenization is always the first step — you must split text into tokens before you can apply other preprocessing steps.',
+  },
+  {
+    question: 'Why do we remove stopwords in NLP preprocessing?',
+    options: [
+      { text: 'To make sentences grammatically correct', correct: false },
+      { text: 'To reduce noise and focus on meaningful words', correct: true },
+      { text: 'To translate text to English', correct: false },
+      { text: 'To count the number of sentences', correct: false },
+    ],
+    explanation: 'Removing stopwords reduces dimensionality and noise, helping models focus on meaningful content words.',
+  },
 ];
 
 export default function TextPreprocessing() {
-  const { language } = useLanguage();
+  const { language } = useContext(LanguageContext);
+  const navigate = useNavigate();
+
+  const [sentence, setSentence] = useState(DEFAULT_SENTENCE);
+  const [activeStep, setActiveStep] = useState(null);
+  const [isAnimating, setIsAnimating] = useState(false);
+
+  const tokens = wordTokenize(sentence);
+  const withoutStopwords = removeStopwords(tokens);
+  const stemmed = withoutStopwords.map(w => simpleStem(w));
+
+  async function runAnimation() {
+    setIsAnimating(true);
+    setActiveStep(0);
+    await new Promise(r => setTimeout(r, 1200));
+    setActiveStep(1);
+    await new Promise(r => setTimeout(r, 1400));
+    setActiveStep(2);
+    await new Promise(r => setTimeout(r, 1400));
+    setIsAnimating(false);
+  }
+
+  const isStopword = w => STOPWORDS_SET.has(w.toLowerCase());
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10 space-y-10">
-
-      {/* ── Module Header ──────────────────────────────────────────────── */}
-      <motion.div
-        initial={ opacity: 0, y: -16 }
-        animate={ opacity: 1, y: 0 }
-        className="text-center"
-      >
-        <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl text-4xl bg-gradient-to-br from-blue-400 to-cyan-600 shadow-lg mb-4">
-          🔧
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50">
+      {/* Hero */}
+      <section className="relative overflow-hidden py-16 px-4 bg-gradient-to-r from-emerald-600 to-teal-600">
+        <div className="max-w-4xl mx-auto text-center text-white">
+          <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
+            <span className="inline-block bg-white bg-opacity-20 rounded-full px-4 py-1 text-sm font-semibold mb-4">Module 2</span>
+            <h1 className="text-4xl md:text-5xl font-extrabold mb-3">Text Preprocessing</h1>
+            <p className="text-emerald-100 text-lg max-w-xl mx-auto">Clean and prepare raw text before feeding it to an NLP model</p>
+          </motion.div>
         </div>
-        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">
-          Module 2
-        </p>
-        <h1 className="text-4xl font-black gradient-text mb-3">
-          {language === 'EN' ? 'Text Preprocessing' : 'टेक्स्ट प्रीप्रोसेसिंग'}
-        </h1>
-        <p className="text-gray-500 max-w-xl mx-auto text-lg">
-          {language === 'EN' ? 'Clean and prepare raw text: stop words, stemming, lemmatization.' : 'कच्चे टेक्स्ट को साफ करें: स्टॉप वर्ड्स, स्टेमिंग, लेमेटाइज़ेशन।'}
-        </p>
-      </motion.div>
+      </section>
 
-      {/* ── Pipeline walkthrough ────────────────────────────────────────── */}
-      <motion.div
-        initial={ opacity: 0, y: 16 }
-        animate={ opacity: 1, y: 0 }
-        transition={ delay: 0.15 }
-        className="card"
-      >
-        <StepByStepPipeline
-          steps={PIPELINE_STEPS}
-          title={language === 'EN' ? 'Learning Pipeline' : 'सीखने की पाइपलाइन'}
-        />
-      </motion.div>
+      <div className="max-w-5xl mx-auto px-4 py-12 space-y-10">
+        {/* Input */}
+        <section className="bg-white rounded-3xl shadow-sm p-8 border border-gray-100">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">Your Sentence</h2>
+          <div className="flex gap-3 mb-2 flex-col sm:flex-row">
+            <input
+              type="text"
+              value={sentence}
+              onChange={e => { setSentence(e.target.value); setActiveStep(null); }}
+              className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 text-gray-800 focus:border-emerald-400 focus:outline-none"
+              placeholder="Enter a sentence to preprocess..."
+            />
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={runAnimation}
+              disabled={isAnimating || !sentence.trim()}
+              className="bg-emerald-600 text-white font-semibold px-6 py-3 rounded-xl hover:bg-emerald-700 disabled:opacity-50 transition-colors whitespace-nowrap"
+            >
+              {isAnimating ? 'Processing...' : '▶ Run Pipeline'}
+            </motion.button>
+          </div>
+          <p className="text-sm text-gray-400">Click "Run Pipeline" to see each step animated</p>
+        </section>
 
-      {/* ── Quiz ────────────────────────────────────────────────────────── */}
-      <motion.div
-        initial={ opacity: 0, y: 16 }
-        animate={ opacity: 1, y: 0 }
-        transition={ delay: 0.25 }
-      >
-        <h2 className="text-2xl font-bold gradient-text mb-4">
-          {language === 'EN' ? '🧩 Module Quiz' : '🧩 मॉड्यूल क्विज़'}
-        </h2>
-        <QuizComponent
-          questions={QUIZ_QUESTIONS}
-          moduleId={2}
-          onComplete={(score, total) => console.log(`Quiz: ${score}/${total}`)}
-        />
-      </motion.div>
+        {/* Step 1: Tokenization */}
+        <motion.section
+          className={`bg-white rounded-3xl shadow-sm p-8 border-2 transition-colors ${activeStep === 0 ? 'border-blue-400' : 'border-gray-100'}`}
+          animate={activeStep === 0 ? { scale: 1.01 } : { scale: 1 }}
+        >
+          <div className="flex items-center gap-3 mb-4">
+            <span className="bg-blue-100 text-blue-700 w-8 h-8 rounded-full flex items-center justify-center font-bold">1</span>
+            <h2 className="text-2xl font-bold text-gray-800">Tokenization</h2>
+            <span className="ml-auto text-sm text-gray-400">{tokens.length} tokens</span>
+          </div>
+          <p className="text-gray-500 mb-5 text-sm">Split the sentence into individual words (tokens)</p>
+          <div className="flex flex-wrap gap-2">
+            <AnimatePresence>
+              {tokens.map((token, i) => (
+                <motion.span
+                  key={`tok-${i}`}
+                  initial={{ opacity: 0, scale: 0.5, y: 10 }}
+                  animate={activeStep !== null ? { opacity: 1, scale: 1, y: 0 } : { opacity: 0.4, scale: 0.95 }}
+                  transition={{ type: 'spring', delay: i * 0.07, stiffness: 300, damping: 20 }}
+                  className="bg-blue-100 text-blue-800 px-3 py-1.5 rounded-lg font-mono text-sm font-semibold"
+                >
+                  {token}
+                </motion.span>
+              ))}
+            </AnimatePresence>
+          </div>
+        </motion.section>
 
-      {/* ── Navigation ──────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-        <Link to="/module/1" className="btn-secondary">← Module 1</Link>
-        <Link to="/progress" className="text-sm text-gray-400 hover:text-primary-500 transition-colors">
-          📊 {language === 'EN' ? 'View Progress' : 'प्रगति देखें'}
-        </Link>
-        <Link to="/module/3" className="btn-primary">Module 3 →</Link>
+        {/* Step 2: Stopword Removal */}
+        <motion.section
+          className={`bg-white rounded-3xl shadow-sm p-8 border-2 transition-colors ${activeStep === 1 ? 'border-red-400' : 'border-gray-100'}`}
+          animate={activeStep === 1 ? { scale: 1.01 } : { scale: 1 }}
+        >
+          <div className="flex items-center gap-3 mb-4">
+            <span className="bg-red-100 text-red-700 w-8 h-8 rounded-full flex items-center justify-center font-bold">2</span>
+            <h2 className="text-2xl font-bold text-gray-800">Stopword Removal</h2>
+            <span className="ml-auto text-sm text-gray-400">{withoutStopwords.length} remain</span>
+          </div>
+          <p className="text-gray-500 mb-5 text-sm">
+            <span className="inline-block w-3 h-3 rounded bg-red-300 mr-1 align-middle" />stopwords fade out &nbsp;
+            <span className="inline-block w-3 h-3 rounded bg-green-300 mr-1 align-middle" />meaningful words stay
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {tokens.map((token, i) => {
+              const stop = isStopword(token);
+              return (
+                <motion.span
+                  key={`sw-${i}`}
+                  animate={activeStep >= 1 ? {
+                    opacity: stop ? 0.25 : 1,
+                    scale: stop ? 0.85 : 1,
+                  } : { opacity: 0.4, scale: 0.95 }}
+                  transition={{ duration: 0.5, delay: i * 0.06 }}
+                  className={`px-3 py-1.5 rounded-lg font-mono text-sm font-semibold transition-colors
+                    ${activeStep >= 1
+                      ? stop ? 'bg-red-100 text-red-400 line-through' : 'bg-emerald-100 text-emerald-800'
+                      : 'bg-gray-100 text-gray-600'
+                    }`}
+                >
+                  {token}
+                </motion.span>
+              );
+            })}
+          </div>
+        </motion.section>
+
+        {/* Step 3: Stemming */}
+        <motion.section
+          className={`bg-white rounded-3xl shadow-sm p-8 border-2 transition-colors ${activeStep === 2 ? 'border-purple-400' : 'border-gray-100'}`}
+          animate={activeStep === 2 ? { scale: 1.01 } : { scale: 1 }}
+        >
+          <div className="flex items-center gap-3 mb-4">
+            <span className="bg-purple-100 text-purple-700 w-8 h-8 rounded-full flex items-center justify-center font-bold">3</span>
+            <h2 className="text-2xl font-bold text-gray-800">Stemming</h2>
+          </div>
+          <p className="text-gray-500 mb-5 text-sm">Reduce each word to its root/base form</p>
+          <div className="flex flex-wrap gap-3">
+            {withoutStopwords.map((token, i) => {
+              const stem = simpleStem(token);
+              const changed = stem !== token;
+              return (
+                <motion.div
+                  key={`stem-${i}`}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={activeStep >= 2 ? { opacity: 1, y: 0 } : { opacity: 0.4 }}
+                  transition={{ delay: i * 0.1 }}
+                  className="flex flex-col items-center"
+                >
+                  {changed && activeStep >= 2 ? (
+                    <>
+                      <span className="text-xs text-gray-400 line-through font-mono">{token}</span>
+                      <span className="bg-purple-100 text-purple-800 px-3 py-1.5 rounded-lg font-mono text-sm font-bold">{stem}</span>
+                    </>
+                  ) : (
+                    <span className="bg-purple-50 text-purple-700 px-3 py-1.5 rounded-lg font-mono text-sm font-semibold">{stem}</span>
+                  )}
+                </motion.div>
+              );
+            })}
+          </div>
+        </motion.section>
+
+        {/* Stats */}
+        {activeStep !== null && (
+          <motion.section
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white rounded-3xl shadow-sm p-6 border border-gray-100"
+          >
+            <h3 className="font-bold text-gray-800 mb-4 text-lg">📊 Statistics</h3>
+            <div className="grid grid-cols-3 gap-4">
+              {[
+                { label: 'Original Tokens', value: tokens.length, color: 'text-blue-600 bg-blue-50' },
+                { label: 'After Stopword Removal', value: withoutStopwords.length, color: 'text-emerald-600 bg-emerald-50' },
+                { label: 'After Stemming', value: stemmed.length, color: 'text-purple-600 bg-purple-50' },
+              ].map((s, i) => (
+                <div key={i} className={`rounded-2xl p-4 text-center ${s.color}`}>
+                  <div className="text-3xl font-extrabold">{s.value}</div>
+                  <div className="text-xs font-medium mt-1 opacity-80">{s.label}</div>
+                </div>
+              ))}
+            </div>
+          </motion.section>
+        )}
+
+        {/* Quiz */}
+        <section>
+          <h2 className="text-3xl font-bold text-gray-800 mb-6">Module Quiz</h2>
+          <QuizComponent questions={QUIZ_QUESTIONS} moduleId="text-preprocessing" />
+        </section>
+
+        {/* Navigation */}
+        <div className="flex justify-between pt-4">
+          <button onClick={() => navigate('/modules/intro-nlp')} className="px-5 py-3 rounded-xl bg-gray-100 text-gray-600 font-semibold hover:bg-gray-200 transition-colors">← Previous Module</button>
+          <button onClick={() => navigate('/modules/bag-of-words')} className="px-5 py-3 rounded-xl bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition-colors">Next Module →</button>
+        </div>
       </div>
-
     </div>
   );
 }
