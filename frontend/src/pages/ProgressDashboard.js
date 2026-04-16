@@ -170,8 +170,8 @@ export default function ProgressDashboard() {
           {[
             { label: language === 'EN' ? 'Overall Score' : 'कुल स्कोर', value: `${overallPct}%`, icon: '🏆', color: 'text-yellow-500' },
             { label: language === 'EN' ? 'Modules Done' : 'मॉड्यूल पूरे', value: `${completedCount}/8`, icon: '✅', color: 'text-emerald-500' },
-            { label: language === 'EN' ? 'Total Attempts', value: tableData.reduce((s, r) => s + r.attempts, 0), icon: '🔄', color: 'text-blue-500' },
-            { label: language === 'EN' ? 'Best Module', icon: '⭐', color: 'text-orange-500',
+            { label: language === 'EN' ? 'Total Attempts' : 'कुल प्रयास', value: tableData.reduce((s, r) => s + r.attempts, 0), icon: '🔄', color: 'text-blue-500' },
+            { label: language === 'EN' ? 'Best Module' : 'सर्वश्रेष्ठ मॉड्यूल', icon: '⭐', color: 'text-orange-500',
               value: radarData.reduce((best, d) => d.score > best.score ? d : best, { score: 0, module: '—' }).module },
           ].map((stat, i) => (
             <div key={i} className="card text-center">
