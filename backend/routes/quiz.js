@@ -1,7 +1,16 @@
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
+const rateLimit = require('express-rate-limit');
 const QuizResult = require('../models/QuizResult');
+
+const quizLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests, please try again later.' },
+});
 
 // In-memory fallback store used when MongoDB is unavailable
 const memoryStore = [];
@@ -9,7 +18,7 @@ const memoryStore = [];
 const isDbConnected = () => mongoose.connection.readyState === 1;
 
 // POST /api/quiz/save
-router.post('/save', async (req, res) => {
+router.post('/save', quizLimiter, async (req, res) => {
   try {
     const { moduleId, score, totalQuestions, studentName } = req.body;
 
@@ -54,7 +63,7 @@ router.post('/save', async (req, res) => {
 });
 
 // GET /api/quiz/results
-router.get('/results', async (req, res) => {
+router.get('/results', quizLimiter, async (req, res) => {
   try {
     if (isDbConnected()) {
       const results = await QuizResult.find().sort({ createdAt: -1 });
@@ -71,10 +80,10 @@ router.get('/results', async (req, res) => {
 });
 
 // GET /api/quiz/progress/:studentName
-router.get('/progress/:studentName', async (req, res) => {
+router.get('/progress/:studentName', quizLimiter, async (req, res) => {
   try {
     const { studentName } = req.params;
-    if (!studentName) {
+    if (!studentName || !studentName.trim()) {
       return res.status(400).json({ error: 'studentName parameter is required.' });
     }
 
